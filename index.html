@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarik Tambang Eksponen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --grass-1:#2f6b3c;
+    --grass-2:#255630;
+    --chalk:#f5f1e6;
+    --rope:#c9a063;
+    --rope-dark:#a17c46;
+    --merah:#e4472b;
+    --merah-dark:#a3331e;
+    --merah-tint:#fdece7;
+    --biru:#2464b4;
+    --biru-dark:#173f7f;
+    --biru-tint:#e8f1fc;
+    --gold:#f2b705;
+    --board-bg:#22321f;
+    --ink:#1c2b19;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Rubik',sans-serif;
+    min-height:100vh;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 40px, transparent 40px, transparent 80px),
+      radial-gradient(ellipse at 50% -10%, #3d7f4c 0%, var(--grass-1) 45%, var(--grass-2) 100%);
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:28px 16px 40px;
+    overflow-x:hidden;
+  }
+  .stage{
+    width:100%;
+    max-width:900px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+  }
+
+  /* ---------- Title ---------- */
+  .title{
+    font-family:'Bungee',cursive;
+    font-size:clamp(22px,4vw,34px);
+    color:var(--chalk);
+    text-align:center;
+    letter-spacing:0.5px;
+    text-shadow:0 3px 0 rgba(0,0,0,0.25);
+    margin:4px 0 0;
+  }
+  .title span{color:var(--gold);}
+
+  /* ---------- Soal board ---------- */
+  .board{
+    background:var(--board-bg);
+    border:6px solid #16220f;
+    border-radius:14px;
+    padding:10px 30px 14px;
+    text-align:center;
+    box-shadow:0 8px 0 rgba(0,0,0,0.28), inset 0 0 0 2px rgba(255,255,255,0.03);
+    position:relative;
+    min-width:200px;
+  }
+  .board-label{
+    display:block;
+    font-family:'Bungee',cursive;
+    font-size:12px;
+    letter-spacing:4px;
+    color:var(--gold);
+    margin-bottom:2px;
+  }
+  .board-question{
+    font-family:'Bungee',cursive;
+    font-size:clamp(26px,5.5vw,42px);
+    color:#ffe9a8;
+    text-shadow:0 0 12px rgba(255,183,39,0.45);
+    white-space:nowrap;
+  }
+  .board-question sup{
+    font-size:0.55em;
+    top:-0.7em;
+    position:relative;
+    margin-left:2px;
+  }
+  .q-eq{color:#ffe9a8;}
+  .category-tag{
+    margin-top:6px;
+    font-size:10px;
+    letter-spacing:2px;
+    color:#a9c79b;
+    text-transform:uppercase;
+    font-weight:700;
+  }
+
+  /* ---------- Arena ---------- */
+  .arena{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:4px;
+  }
+  .team-tag{
+    font-family:'Bungee',cursive;
+    font-size:clamp(11px,2vw,15px);
+    color:var(--chalk);
+    white-space:nowrap;
+    padding:6px 10px;
+    border-radius:8px;
+    flex-shrink:0;
+  }
+  .team-tag.left{background:var(--merah);box-shadow:0 3px 0 var(--merah-dark);}
+  .team-tag.right{background:var(--biru);box-shadow:0 3px 0 var(--biru-dark);}
+
+  .rope-track{
+    position:relative;
+    flex:1;
+    height:130px;
+    background:linear-gradient(180deg, rgba(0,0,0,0.06), transparent 30%);
+  }
+  .ground-line{
+    position:absolute;
+    left:0;right:0;bottom:18px;
+    height:2px;
+    background:rgba(245,241,230,0.35);
+  }
+  .post{
+    position:absolute;
+    bottom:18px;
+    width:4px;
+    height:46px;
+    background:#8a6a3f;
+    border-radius:2px;
+  }
+  .post.left{left:2%;}
+  .post.right{right:2%;}
+  .player{
+    position:absolute;
+    bottom:60px;
+    width:34px;
+    height:34px;
+    transition:transform 0.35s cubic-bezier(.36,.07,.19,.97);
+  }
+  .player.left{left:calc(2% - 16px);}
+  .player.right{right:calc(2% - 16px);}
+  .player svg{width:100%;height:100%;overflow:visible;}
+  .player.lean-left{transform:rotate(-16deg) translateX(-4px);}
+  .player.lean-right{transform:rotate(16deg) translateX(4px);}
+
+  .boundary{
+    position:absolute;
+    bottom:12px;
+    top:14px;
+    width:0;
+    border-left:3px dashed rgba(245,241,230,0.55);
+  }
+  .boundary.left{left:20%;}
+  .boundary.right{left:80%;}
+  .boundary-label{
+    position:absolute;
+    top:-2px;
+    font-size:9px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+
+  .rope-bar{
+    position:absolute;
+    left:6%;
+    right:6%;
+    bottom:38px;
+    height:9px;
+    border-radius:5px;
+    background:repeating-linear-gradient(115deg, var(--rope) 0 6px, var(--rope-dark) 6px 12px);
+    box-shadow:0 3px 0 rgba(0,0,0,0.2);
+    transform-origin:center;
+  }
+  .rope-bar.tug{
+    animation:tugshake 0.5s ease;
+  }
+  @keyframes tugshake{
+    0%{transform:translateX(0);}
+    25%{transform:translateX(-5px);}
+    50%{transform:translateX(4px);}
+    75%{transform:translateX(-2px);}
+    100%{transform:translateX(0);}
+  }
+
+  .flag{
+    position:absolute;
+    bottom:44px;
+    left:50%;
+    transform:translateX(-50%);
+    transition:left 0.6s cubic-bezier(.36,.07,.19,.97);
+    font-size:26px;
+    filter:drop-shadow(0 3px 2px rgba(0,0,0,0.35));
+  }
+
+  /* ---------- Controls / keypads ---------- */
+  .controls{
+    display:flex;
+    width:100%;
+    gap:16px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .keypad{
+    background:#fbf9f3;
+    border:5px solid var(--ink);
+    border-radius:16px;
+    width:250px;
+    padding:12px;
+    box-shadow:0 6px 0 rgba(0,0,0,0.28);
+  }
+  .keypad.shake{animation:shakeit 0.4s ease;}
+  @keyframes shakeit{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-6px);}
+    40%{transform:translateX(6px);}
+    60%{transform:translateX(-4px);}
+    80%{transform:translateX(4px);}
+  }
+  .keypad-header{
+    text-align:center;
+    font-family:'Bungee',cursive;
+    font-size:13px;
+    letter-spacing:1px;
+    color:#fff;
+    padding:6px;
+    border-radius:8px;
+    margin-bottom:8px;
+  }
+  .keypad.merah .keypad-header{background:var(--merah);}
+  .keypad.biru .keypad-header{background:var(--biru);}
+
+  .display-label{
+    font-size:10px;
+    font-weight:600;
+    color:#8a8471;
+    text-align:center;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:2px;
+  }
+  .display{
+    background:#20291b;
+    color:#c8ffb0;
+    font-family:'Rubik',sans-serif;
+    font-weight:700;
+    font-size:22px;
+    text-align:right;
+    padding:8px 12px;
+    border-radius:8px;
+    min-height:20px;
+    letter-spacing:2px;
+    margin-bottom:10px;
+    box-shadow:inset 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .keys{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:6px;
+  }
+  .key{
+    border:none;
+    border-radius:8px;
+    padding:12px 0;
+    font-family:'Rubik',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    background:#eee7d6;
+    color:var(--ink);
+    box-shadow:0 3px 0 #c9bfa2;
+    transition:transform 0.05s ease, box-shadow 0.05s ease;
+  }
+  .key:active{transform:translateY(2px);box-shadow:0 1px 0 #c9bfa2;}
+  .key.back{background:#e3d8bd;font-size:15px;}
+  .key.enter{
+    color:#fff;
+    font-size:12px;
+  }
+  .keypad.merah .key.enter{background:var(--merah);box-shadow:0 3px 0 var(--merah-dark);}
+  .keypad.biru .key.enter{background:var(--biru);box-shadow:0 3px 0 var(--biru-dark);}
+  .keypad.merah .key.enter:active{box-shadow:0 1px 0 var(--merah-dark);}
+  .keypad.biru .key.enter:active{box-shadow:0 1px 0 var(--biru-dark);}
+
+  /* multiple-choice panel */
+  .mc-panel{
+    display:none;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+  }
+  .mc-panel.show{display:grid;}
+  .mc-btn{
+    border:none;
+    border-radius:10px;
+    padding:16px 6px;
+    font-family:'Rubik',sans-serif;
+    font-weight:700;
+    font-size:clamp(12px,3.4vw,15px);
+    cursor:pointer;
+    background:#eee7d6;
+    color:var(--ink);
+    box-shadow:0 3px 0 #c9bfa2;
+    min-height:52px;
+    word-break:break-word;
+  }
+  .mc-btn:active:not([disabled]){transform:translateY(2px);box-shadow:0 1px 0 #c9bfa2;}
+  .mc-btn.wrong{
+    background:#f3c9c0;
+    color:#7a291b;
+    box-shadow:0 3px 0 #d99a8c;
+    text-decoration:line-through;
+    opacity:0.65;
+    cursor:not-allowed;
+  }
+  .mc-btn.correct{
+    background:#bfe8c9;
+    color:#1c6b34;
+    box-shadow:0 3px 0 #8fcf9e;
+  }
+
+  .score-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:10px;
+    font-size:12px;
+    font-weight:600;
+    color:#5a5748;
+  }
+  .score-row b{font-size:15px;color:var(--ink);}
+  .feedback{
+    min-height:16px;
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    margin-top:4px;
+  }
+  .feedback.ok{color:#1c8a3c;}
+  .feedback.bad{color:var(--merah-dark);}
+
+  /* ---------- Win overlay ---------- */
+  .win-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(10,15,8,0.72);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:20;
+    padding:20px;
+  }
+  .win-overlay.show{display:flex;}
+  .win-card{
+    background:var(--chalk);
+    border-radius:16px;
+    padding:32px 28px;
+    text-align:center;
+    max-width:340px;
+    box-shadow:0 12px 0 rgba(0,0,0,0.3);
+  }
+  .win-emoji{font-size:44px;margin-bottom:6px;}
+  .win-text{
+    font-family:'Bungee',cursive;
+    font-size:22px;
+    margin-bottom:6px;
+  }
+  .win-sub{
+    font-size:13px;
+    color:#6b6858;
+    margin-bottom:18px;
+  }
+  .again-btn{
+    font-family:'Bungee',cursive;
+    background:var(--gold);
+    border:none;
+    color:#3a2a00;
+    padding:12px 26px;
+    border-radius:10px;
+    font-size:14px;
+    cursor:pointer;
+    box-shadow:0 4px 0 #b8850a;
+  }
+  .again-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #b8850a;}
+
+  @media (max-width:560px){
+    .controls{gap:10px;}
+    .keypad{width:46%;min-width:150px;padding:8px;}
+    .display{font-size:17px;}
+    .key{padding:9px 0;font-size:13px;}
+    .mc-btn{padding:12px 4px;min-height:44px;}
+    .team-tag{display:none;}
+    .rope-track{height:105px;}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1 class="title">Tarik Tambang <span>Eksponen</span></h1>
+
+  <div class="board">
+    <span class="board-label">SOAL</span>
+    <div class="board-question" id="questionText">2<sup>3</sup></div>
+    <div class="category-tag" id="categoryTag">Pangkat</div>
+  </div>
+
+  <div class="arena">
+    <span class="team-tag left">TIM MERAH</span>
+    <div class="rope-track">
+      <div class="ground-line"></div>
+      <div class="post left"></div>
+      <div class="post right"></div>
+      <div class="boundary left"><span class="boundary-label" style="color:#ffd9cf">MENANG</span></div>
+      <div class="boundary right"><span class="boundary-label" style="color:#cfe3ff">MENANG</span></div>
+      <div class="rope-bar" id="ropeBar"></div>
+      <div class="flag" id="flag">🚩</div>
+      <div class="player left" id="playerLeft">
+        <svg viewBox="0 0 40 40"><circle cx="20" cy="10" r="8" fill="var(--merah)"/><rect x="14" y="17" width="12" height="18" rx="4" fill="var(--merah-dark)"/></svg>
+      </div>
+      <div class="player right" id="playerRight">
+        <svg viewBox="0 0 40 40"><circle cx="20" cy="10" r="8" fill="var(--biru)"/><rect x="14" y="17" width="12" height="18" rx="4" fill="var(--biru-dark)"/></svg>
+      </div>
+    </div>
+    <span class="team-tag right">TIM BIRU</span>
+  </div>
+
+  <div class="controls">
+    <div class="keypad merah" id="padLeft" data-team="left">
+      <div class="keypad-header">TIM MERAH</div>
+
+      <div class="numeric-panel" id="numPanelLeft">
+        <div class="display-label">Input Nilai</div>
+        <div class="display" id="displayLeft">&nbsp;</div>
+        <div class="keys">
+          <button class="key">1</button><button class="key">2</button><button class="key">3</button><button class="key">4</button>
+          <button class="key">5</button><button class="key">6</button><button class="key">7</button><button class="key">8</button>
+          <button class="key back">⌫</button><button class="key">9</button><button class="key">0</button><button class="key enter">MASUK</button>
+        </div>
+      </div>
+
+      <div class="mc-panel" id="mcPanelLeft">
+        <button class="mc-btn"></button>
+        <button class="mc-btn"></button>
+        <button class="mc-btn"></button>
+        <button class="mc-btn"></button>
+      </div>
+
+      <div class="score-row"><span>Skor</span><b id="scoreLeft">0</b></div>
+      <div class="feedback" id="feedbackLeft"></div>
+    </div>
+
+    <div class="keypad biru" id="padRight" data-team="right">
+      <div class="keypad-header">TIM BIRU</div>
+
+      <div class="numeric-panel" id="numPanelRight">
+        <div class="display-label">Input Nilai</div>
+        <div class="display" id="displayRight">&nbsp;</div>
+        <div class="keys">
+          <button class="key">1</button><button class="key">2</button><button class="key">3</button><button class="key">4</button>
+          <button class="key">5</button><button class="key">6</button><button class="key">7</button><button class="key">8</button>
+          <button class="key back">⌫</button><button class="key">9</button><button class="key">0</button><button class="key enter">MASUK</button>
+        </div>
+      </div>
+
+      <div class="mc-panel" id="mcPanelRight">
+        <button class="mc-btn"></button>
+        <button class="mc-btn"></button>
+        <button class="mc-btn"></button>
+        <button class="mc-btn"></button>
+      </div>
+
+      <div class="score-row"><span>Skor</span><b id="scoreRight">0</b></div>
+      <div class="feedback" id="feedbackRight"></div>
+    </div>
+  </div>
+</div>
+
+<div class="win-overlay" id="winOverlay">
+  <div class="win-card">
+    <div class="win-emoji" id="winEmoji">🏆</div>
+    <div class="win-text" id="winText">TIM MERAH MENANG!</div>
+    <div class="win-sub">Tarik tambang selesai. Coba lagi untuk mengasah kemampuan eksponen &amp; akarmu!</div>
+    <button class="again-btn" id="againBtn">MAIN LAGI</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const WIN_STEPS = 5;
+  let position = 0;       // -5 .. +5
+  let locked = false;
+  let currentQuestion = null;
+  let scores = { left: 0, right: 0 };
+  let inputs = { left: '', right: '' };
+
+  const questionText = document.getElementById('questionText');
+  const categoryTag = document.getElementById('categoryTag');
+  const flag = document.getElementById('flag');
+  const ropeBar = document.getElementById('ropeBar');
+  const playerLeft = document.getElementById('playerLeft');
+  const playerRight = document.getElementById('playerRight');
+  const displays = { left: document.getElementById('displayLeft'), right: document.getElementById('displayRight') };
+  const feedbacks = { left: document.getElementById('feedbackLeft'), right: document.getElementById('feedbackRight') };
+  const scoreEls = { left: document.getElementById('scoreLeft'), right: document.getElementById('scoreRight') };
+  const pads = { left: document.getElementById('padLeft'), right: document.getElementById('padRight') };
+  const numPanels = { left: document.getElementById('numPanelLeft'), right: document.getElementById('numPanelRight') };
+  const mcPanels = { left: document.getElementById('mcPanelLeft'), right: document.getElementById('mcPanelRight') };
+  const mcButtons = {
+    left: Array.from(mcPanels.left.querySelectorAll('.mc-btn')),
+    right: Array.from(mcPanels.right.querySelectorAll('.mc-btn'))
+  };
+  const winOverlay = document.getElementById('winOverlay');
+  const winText = document.getElementById('winText');
+  const winEmoji = document.getElementById('winEmoji');
+
+  function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+  function shuffleArray(arr){
+    for(let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function buildOptions(correctText, pool){
+    const set = new Set();
+    const result = [];
+    for(const d of pool){
+      const s = String(d);
+      if(s !== correctText && !set.has(s)){ set.add(s); result.push(s); }
+      if(result.length === 3) break;
+    }
+    let filler = 1;
+    while(result.length < 3){
+      const base = parseFloat(correctText);
+      if(isNaN(base)) break;
+      const alt = String(base + (filler * 2 + 1));
+      if(alt !== correctText && !set.has(alt)){ set.add(alt); result.push(alt); }
+      filler++;
+      if(filler > 20) break;
+    }
+    const all = [correctText, ...result];
+    return shuffleArray(all);
+  }
+
+  /* ---------- Question generators ---------- */
+
+  function generatePangkat(){
+    // exponent chosen first, base range capped per exponent so the answer never exceeds 3 digits (<=999)
+    const r = Math.random();
+    let base, exp;
+    if(r < 0.55){ exp = 2; base = randInt(2, 20); }       // max 400
+    else if(r < 0.90){ exp = 3; base = randInt(2, 9); }   // max 729
+    else { exp = 4; base = randInt(2, 5); }               // max 625
+    const value = Math.pow(base, exp);
+    return { type: 'numeric', category: 'Pangkat', promptHTML: base + '<sup>' + exp + '</sup>', answer: value };
+  }
+
+  function generateAkar(){
+    if(Math.random() < 0.7){
+      const r = randInt(2, 12);
+      const value = r * r;
+      return { type: 'numeric', category: 'Akar', promptHTML: '√' + value, answer: r };
+    } else {
+      const r = randInt(2, 6);
+      const value = r * r * r;
+      return { type: 'numeric', category: 'Akar', promptHTML: '∛' + value, answer: r };
+    }
+  }
+
+  function generateOperasiPangkat(){
+    const subtype = randInt(1, 3);
+    const base = randInt(2, 5);
+    let promptHTML, correct, pool;
+
+    if(subtype === 1){ // a^m x a^n
+      const m = randInt(1, 3), n = randInt(1, 3);
+      correct = Math.pow(base, m + n);
+      promptHTML = base + '<sup>' + m + '</sup> &times; ' + base + '<sup>' + n + '</sup>';
+      pool = [Math.pow(base, m * n), Math.pow(base, m) + Math.pow(base, n), Math.pow(base, m + n + 1)];
+    } else if(subtype === 2){ // a^m / a^n
+      const m = randInt(2, 5), n = randInt(1, m - 1);
+      correct = Math.pow(base, m - n);
+      promptHTML = base + '<sup>' + m + '</sup> &divide; ' + base + '<sup>' + n + '</sup>';
+      pool = [Math.pow(base, m + n), Math.abs(Math.pow(base, m) - Math.pow(base, n)), Math.pow(base, Math.max(1, m - n + 1))];
+    } else { // (a^m)^n
+      const m = randInt(1, 2), n = randInt(1, 3);
+      correct = Math.pow(base, m * n);
+      promptHTML = '(' + base + '<sup>' + m + '</sup>)<sup>' + n + '</sup>';
+      pool = [Math.pow(base, m + n), Math.pow(base, m * n + 1), Math.pow(base, Math.max(1, m * n - 1))];
+    }
+
+    const options = buildOptions(String(correct), pool);
+    return { type: 'mc', category: 'Operasi Pangkat', promptHTML, correctText: String(correct), options };
+  }
+
+  function generateOperasiAkar(){
+    const subtype = randInt(1, 3);
+    let promptHTML, correctText, pool;
+
+    if(subtype === 1){ // akar x akar
+      const m = randInt(2, 6), s = randInt(2, 3);
+      const p = m, q = m * s * s, r = m * s;
+      promptHTML = '√' + p + ' &times; √' + q;
+      correctText = String(r);
+      pool = [p, q, r + 1, Math.max(1, r - 1)];
+    } else if(subtype === 2){ // akar / akar
+      const m = randInt(2, 6), s = randInt(2, 4);
+      const p = m * s * s, q = m, r = s;
+      promptHTML = '√' + p + ' &divide; √' + q;
+      correctText = String(r);
+      pool = [p, q, r + 1, Math.max(1, r - 1)];
+    } else { // suku sejenis: k√a + l√a
+      const k = randInt(1, 5), l = randInt(1, 5);
+      const radicands = [2, 3, 5, 6, 7, 10];
+      const a = radicands[randInt(0, radicands.length - 1)];
+      promptHTML = k + '√' + a + ' + ' + l + '√' + a;
+      correctText = (k + l) + '√' + a;
+      pool = [(k * l) + '√' + a, (k + l) + '√' + (a * 2), Math.abs(k - l || 1) + '√' + a];
+    }
+
+    const options = buildOptions(correctText, pool);
+    return { type: 'mc', category: 'Operasi Akar', promptHTML, correctText, options };
+  }
+
+  function pickQuestion(){
+    const r = Math.random();
+    if(r < 0.30) return generatePangkat();
+    if(r < 0.55) return generateAkar();
+    if(r < 0.80) return generateOperasiPangkat();
+    return generateOperasiAkar();
+  }
+
+  /* ---------- Panel / UI helpers ---------- */
+
+  function showPanel(team, mode){
+    if(mode === 'numeric'){
+      numPanels[team].style.display = 'block';
+      mcPanels[team].classList.remove('show');
+    } else {
+      numPanels[team].style.display = 'none';
+      mcPanels[team].classList.add('show');
+    }
+  }
+
+  function setupMCPanel(team, options){
+    const shuffled = shuffleArray(options.slice());
+    mcButtons[team].forEach((btn, i) => {
+      btn.textContent = shuffled[i];
+      btn.disabled = false;
+      btn.classList.remove('wrong', 'correct');
+    });
+  }
+
+  function updateDisplay(team){
+    displays[team].innerHTML = inputs[team] === '' ? '&nbsp;' : inputs[team];
+  }
+
+  function updateFlag(){
+    const pct = 50 + position * 6; // 20 .. 80
+    flag.style.left = pct + '%';
+  }
+
+  function newQuestion(){
+    currentQuestion = pickQuestion();
+    questionText.innerHTML = currentQuestion.promptHTML + ' <span class="q-eq">= ?</span>';
+    categoryTag.textContent = currentQuestion.category;
+
+    if(currentQuestion.type === 'numeric'){
+      inputs.left = ''; inputs.right = '';
+      updateDisplay('left'); updateDisplay('right');
+      showPanel('left', 'numeric'); showPanel('right', 'numeric');
+    } else {
+      setupMCPanel('left', currentQuestion.options);
+      setupMCPanel('right', currentQuestion.options);
+      showPanel('left', 'mc'); showPanel('right', 'mc');
+    }
+  }
+
+  function flashFeedback(team, ok, msg){
+    const el = feedbacks[team];
+    el.textContent = msg;
+    el.className = 'feedback ' + (ok ? 'ok' : 'bad');
+    setTimeout(() => { el.textContent = ''; el.className = 'feedback'; }, 900);
+  }
+
+  function shakePad(team){
+    pads[team].classList.add('shake');
+    setTimeout(() => pads[team].classList.remove('shake'), 400);
+  }
+
+  function leanPlayer(team){
+    const el = team === 'left' ? playerLeft : playerRight;
+    const cls = team === 'left' ? 'lean-left' : 'lean-right';
+    el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), 400);
+  }
+
+  function showWin(team){
+    winText.textContent = (team === 'left' ? 'TIM MERAH MENANG!' : 'TIM BIRU MENANG!');
+    winEmoji.textContent = team === 'left' ? '🔴🏆' : '🔵🏆';
+    winOverlay.classList.add('show');
+  }
+
+  function handleCorrect(team){
+    locked = true;
+    scores[team]++;
+    scoreEls[team].textContent = scores[team];
+    flashFeedback(team, true, 'Benar! Tarik!');
+    ropeBar.classList.add('tug');
+    setTimeout(() => ropeBar.classList.remove('tug'), 500);
+    leanPlayer(team);
+    position += (team === 'left') ? -1 : 1;
+    updateFlag();
+
+    setTimeout(() => {
+      if(position <= -WIN_STEPS || position >= WIN_STEPS){
+        showWin(position <= -WIN_STEPS ? 'left' : 'right');
+      } else {
+        newQuestion();
+        locked = false;
+      }
+    }, 650);
+  }
+
+  function handleWrong(team, msg){
+    flashFeedback(team, false, msg);
+    shakePad(team);
+  }
+
+  /* ---------- Numeric keypad actions ---------- */
+
+  function pressDigit(team, digit){
+    if(locked || currentQuestion.type !== 'numeric') return;
+    if(inputs[team].length >= 3) return;
+    inputs[team] += digit;
+    updateDisplay(team);
+  }
+
+  function pressBack(team){
+    if(locked || currentQuestion.type !== 'numeric') return;
+    inputs[team] = inputs[team].slice(0, -1);
+    updateDisplay(team);
+  }
+
+  function submitNumeric(team){
+    if(locked || currentQuestion.type !== 'numeric') return;
+    if(inputs[team] === ''){
+      handleWrong(team, 'Isi dulu jawabannya!');
+      return;
+    }
+    const val = parseInt(inputs[team], 10);
+    if(val === currentQuestion.answer){
+      handleCorrect(team);
+    } else {
+      handleWrong(team, 'Salah, coba lagi!');
+      inputs[team] = '';
+      updateDisplay(team);
+    }
+  }
+
+  function mcClick(team, btn){
+    if(locked || currentQuestion.type !== 'mc' || btn.disabled) return;
+    const val = btn.textContent;
+    if(val === currentQuestion.correctText){
+      btn.classList.add('correct');
+      handleCorrect(team);
+    } else {
+      btn.classList.add('wrong');
+      btn.disabled = true;
+      handleWrong(team, 'Salah, coba lagi!');
+    }
+  }
+
+  function resetGame(){
+    position = 0;
+    locked = false;
+    scores = { left: 0, right: 0 };
+    inputs = { left: '', right: '' };
+    scoreEls.left.textContent = '0';
+    scoreEls.right.textContent = '0';
+    updateFlag();
+    newQuestion();
+    winOverlay.classList.remove('show');
+  }
+
+  /* ---------- wire up ---------- */
+
+  ['left', 'right'].forEach(team => {
+    const pad = pads[team];
+    pad.querySelectorAll('.key').forEach(btn => {
+      const label = btn.textContent.trim();
+      btn.addEventListener('click', () => {
+        if(label === '⌫') pressBack(team);
+        else if(label === 'MASUK') submitNumeric(team);
+        else pressDigit(team, label);
+      });
+    });
+    mcButtons[team].forEach(btn => {
+      btn.addEventListener('click', () => mcClick(team, btn));
+    });
+  });
+
+  document.getElementById('againBtn').addEventListener('click', resetGame);
+
+  // init
+  updateFlag();
+  newQuestion();
+})();
+</script>
+</body>
+</html>
